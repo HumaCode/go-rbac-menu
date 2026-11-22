@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"go-rbac-menu/internal/domain"
+	"github.com/HumaCode/go-rbac-menu/internal/domain"
 )
 
 func TestSortMenuTree(t *testing.T) {

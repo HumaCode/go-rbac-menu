@@ -4,8 +4,8 @@ import (
 	"errors"
 	"sort"
 
-	"go-rbac-menu/internal/domain"
-	"go-rbac-menu/internal/repository"
+	"github.com/HumaCode/go-rbac-menu/internal/domain"
+	"github.com/HumaCode/go-rbac-menu/internal/repository"
 )
 
 type MenuService interface {

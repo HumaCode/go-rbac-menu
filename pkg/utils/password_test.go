@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"go-rbac-menu/pkg/utils"
+	"github.com/HumaCode/go-rbac-menu/pkg/utils"
 )
 
 func TestPasswordHashing(t *testing.T) {

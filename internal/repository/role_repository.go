@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"go-rbac-menu/internal/domain"
+	"github.com/HumaCode/go-rbac-menu/internal/domain"
 	"gorm.io/gorm"
 )
 

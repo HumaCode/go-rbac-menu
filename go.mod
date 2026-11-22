@@ -1,4 +1,4 @@
-module go-rbac-menu
+module github.com/HumaCode/go-rbac-menu
 
 go 1.27.4
 

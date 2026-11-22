@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"go-rbac-menu/pkg/utils"
+	"github.com/HumaCode/go-rbac-menu/pkg/utils"
 	"gorm.io/gorm"
 )
 

@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	"go-rbac-menu/internal/domain"
+	"github.com/HumaCode/go-rbac-menu/internal/domain"
 	"gorm.io/gorm"
 )
 

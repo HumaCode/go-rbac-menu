@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"go-rbac-menu/internal/repository"
-	"go-rbac-menu/pkg/response"
+	"github.com/HumaCode/go-rbac-menu/internal/repository"
+	"github.com/HumaCode/go-rbac-menu/pkg/response"
 
 	"github.com/nelthaarion/breeze/v2"
 )

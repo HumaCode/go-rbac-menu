@@ -3,10 +3,10 @@ package middleware
 import (
 	"strings"
 
-	"go-rbac-menu/config"
-	"go-rbac-menu/internal/repository"
-	"go-rbac-menu/pkg/response"
-	"go-rbac-menu/pkg/utils"
+	"github.com/HumaCode/go-rbac-menu/config"
+	"github.com/HumaCode/go-rbac-menu/internal/repository"
+	"github.com/HumaCode/go-rbac-menu/pkg/response"
+	"github.com/HumaCode/go-rbac-menu/pkg/utils"
 
 	"github.com/nelthaarion/breeze/v2"
 )

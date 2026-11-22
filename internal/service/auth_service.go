@@ -3,10 +3,10 @@ package service
 import (
 	"errors"
 
-	"go-rbac-menu/config"
-	"go-rbac-menu/internal/domain"
-	"go-rbac-menu/internal/repository"
-	"go-rbac-menu/pkg/utils"
+	"github.com/HumaCode/go-rbac-menu/config"
+	"github.com/HumaCode/go-rbac-menu/internal/domain"
+	"github.com/HumaCode/go-rbac-menu/internal/repository"
+	"github.com/HumaCode/go-rbac-menu/pkg/utils"
 )
 
 type AuthService interface {

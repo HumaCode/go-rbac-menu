@@ -3,8 +3,8 @@ package seeder
 import (
 	"log"
 
-	"go-rbac-menu/internal/domain"
-	"go-rbac-menu/pkg/utils"
+	"github.com/HumaCode/go-rbac-menu/internal/domain"
+	"github.com/HumaCode/go-rbac-menu/pkg/utils"
 	"gorm.io/gorm"
 )
 

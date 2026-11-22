@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"go-rbac-menu/internal/service"
-	"go-rbac-menu/pkg/response"
+	"github.com/HumaCode/go-rbac-menu/internal/service"
+	"github.com/HumaCode/go-rbac-menu/pkg/response"
 
 	"github.com/nelthaarion/breeze/v2"
 )

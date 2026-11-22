@@ -1,11 +1,11 @@
 package router
 
 import (
-	"go-rbac-menu/config"
-	"go-rbac-menu/internal/delivery/http/handler"
-	"go-rbac-menu/internal/delivery/http/middleware"
-	"go-rbac-menu/internal/repository"
-	"go-rbac-menu/pkg/response"
+	"github.com/HumaCode/go-rbac-menu/config"
+	"github.com/HumaCode/go-rbac-menu/internal/delivery/http/handler"
+	"github.com/HumaCode/go-rbac-menu/internal/delivery/http/middleware"
+	"github.com/HumaCode/go-rbac-menu/internal/repository"
+	"github.com/HumaCode/go-rbac-menu/pkg/response"
 
 	"github.com/nelthaarion/breeze/v2"
 	breezeMw "github.com/nelthaarion/breeze/v2/middlewares"

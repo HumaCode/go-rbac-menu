@@ -3,8 +3,8 @@ package service
 import (
 	"errors"
 
-	"go-rbac-menu/internal/domain"
-	"go-rbac-menu/internal/repository"
+	"github.com/HumaCode/go-rbac-menu/internal/domain"
+	"github.com/HumaCode/go-rbac-menu/internal/repository"
 )
 
 type UserService interface {

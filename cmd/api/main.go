@@ -4,13 +4,13 @@ import (
 	"log"
 	"runtime"
 
-	"go-rbac-menu/config"
-	"go-rbac-menu/internal/delivery/http/handler"
-	"go-rbac-menu/internal/delivery/http/router"
-	"go-rbac-menu/internal/domain"
-	"go-rbac-menu/internal/repository"
-	"go-rbac-menu/internal/seeder"
-	"go-rbac-menu/internal/service"
+	"github.com/HumaCode/go-rbac-menu/config"
+	"github.com/HumaCode/go-rbac-menu/internal/delivery/http/handler"
+	"github.com/HumaCode/go-rbac-menu/internal/delivery/http/router"
+	"github.com/HumaCode/go-rbac-menu/internal/domain"
+	"github.com/HumaCode/go-rbac-menu/internal/repository"
+	"github.com/HumaCode/go-rbac-menu/internal/seeder"
+	"github.com/HumaCode/go-rbac-menu/internal/service"
 
 	"github.com/nelthaarion/breeze/v2"
 )
