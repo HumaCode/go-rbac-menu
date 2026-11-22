@@ -209,3 +209,4 @@ func (m *Manager) AssignRoleMenuPermission(roleID, menuPermissionID string) erro
 func (m *Manager) RemoveRoleMenuPermission(roleID, menuPermissionID string) error {
 	return m.db.Where("role_id = ? AND menu_permission_id = ?", roleID, menuPermissionID).Delete(&RoleMenuPermission{}).Error
 }
+

@@ -12,3 +12,4 @@ func TestNewULID(t *testing.T) {
 		t.Errorf("expected ULID length 26, got %d", len(id))
 	}
 }
+

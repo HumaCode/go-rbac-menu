@@ -109,3 +109,4 @@ type RoleMenuPermission struct {
 func (RoleMenuPermission) TableName() string {
 	return "role_menu_permissions"
 }
+
