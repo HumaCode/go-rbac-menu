@@ -21,3 +21,4 @@ func TestPasswordHashing(t *testing.T) {
 		t.Errorf("expected invalid password check to fail")
 	}
 }
+

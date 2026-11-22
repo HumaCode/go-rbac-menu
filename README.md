@@ -142,3 +142,4 @@ go run cmd/api/main.go
 - `POST /api/v1/users/:id/roles` : Pasang role ke user.
 - `DELETE /api/v1/users/:id/roles` : Cabut role dari user.
 - `PATCH /api/v1/users/:id/status` : Aktifkan / nonaktifkan user (`is_active = 1 / 0`).
+

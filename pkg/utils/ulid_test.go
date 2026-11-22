@@ -20,3 +20,4 @@ func TestNewULID(t *testing.T) {
 		t.Errorf("expected unique ULIDs, got duplicate %s", id1)
 	}
 }
+

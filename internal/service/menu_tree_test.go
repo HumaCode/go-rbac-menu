@@ -52,3 +52,4 @@ func TestSortMenuTree(t *testing.T) {
 		t.Errorf("expected child[1] to be User Management, got %s", tree[1].Children[1].Title)
 	}
 }
+

@@ -33,3 +33,4 @@ func TestJWTTokens(t *testing.T) {
 		t.Errorf("expected roles %v, got %v", roles, claims.Roles)
 	}
 }
+
