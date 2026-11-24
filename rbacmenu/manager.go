@@ -241,6 +241,7 @@ func (m *Manager) CheckUserPermission(userID, menuPath, permissionCode string) (
 
 // AssignRoleMenuPermission grants an active menu permission to a role
 func (m *Manager) AssignRoleMenuPermission(roleID, menuPermissionID string) error {
+	defer m.ClearCache()
 	var existing RoleMenuPermission
 	err := m.db.Where("role_id = ? AND menu_permission_id = ?", roleID, menuPermissionID).First(&existing).Error
 	if err == nil {
@@ -264,6 +265,7 @@ func (m *Manager) AssignRoleMenuPermission(roleID, menuPermissionID string) erro
 
 // RemoveRoleMenuPermission revokes a menu permission from a role
 func (m *Manager) RemoveRoleMenuPermission(roleID, menuPermissionID string) error {
+	defer m.ClearCache()
 	return m.db.Where("role_id = ? AND menu_permission_id = ?", roleID, menuPermissionID).Delete(&RoleMenuPermission{}).Error
 }
 

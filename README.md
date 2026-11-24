@@ -249,7 +249,43 @@ func GetNavMenuHandler(c *gin.Context) {
 
 ---
 
-### 6. Penggunaan di Template HTML Go (SSR Ala Blade)
+### 6. Helper Berperforma Tinggi (`Menus()` & `URLMenu()`) - Zero N+1 & In-Memory Cache
+
+Sistem ini memiliki helper yang mengadopsi persis pola caching & in-memory filtering Laravel:
+
+#### A. Helper `URLMenu()` (Padanan `urlMenu()` Laravel):
+- Mengambil seluruh path menu aktif yang di-cache di memori (RAM).
+- Otomatis diurutkan dari yang karakternya **paling panjang ke paling pendek** agar Submenu / Childmenu lebih diprioritaskan daripada Parent Menu.
+```go
+urls := menuManager.URLMenu()
+// Hasil terurut: ["/ppid/permohonan/masuk/detail", "/ppid/permohonan/masuk", "/ppid/permohonan", "/ppid"]
+```
+
+#### B. Helper `Menus()` (Padanan `menus()` Laravel - Zero N+1 Query):
+- **100% In-Memory Filtering:** Struktur menu mentah di-cache secara global di memori.
+- **Single Eager Query:** Hak akses role di-load dalam **1 query tunggal**, lalu penyaringan menu, submenu, dan childmenu dilakukan murni oleh CPU di memori.
+- **Otomatis Bersih:** Kategori yang semua menunya tidak boleh diakses akan otomatis disaring keluar (tidak akan muncul kategori kosong).
+
+```go
+// 1. Ambil menu lengkap (menyesuaikan dinamis: menu, submenu, hingga childmenu):
+categories := menuManager.Menus(userRoleIDs...)
+
+// 2. Atau jika HANYA ingin Menu dan Submenu saja (membatasi max depth = 2):
+categories := menuManager.MenusWithMaxDepth(2, userRoleIDs...)
+
+// 3. Atau langsung menggunakan User ID:
+categories := menuManager.MenusForUser(currentUserID)
+```
+
+#### C. Cache Invalidation:
+Kapan pun ada penambahan/perubahan menu atau permission, cache dapat di-clear secara instan:
+```go
+menuManager.ClearCache()
+```
+
+---
+
+### 7. Penggunaan di Template HTML Go (SSR Ala Blade)
 
 Jika Anda merender file `.html` langsung dari Golang:
 

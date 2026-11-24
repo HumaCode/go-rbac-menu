@@ -129,6 +129,7 @@ func (m *Manager) getUserRoleIDs(userID string) []string {
 // Automatically creates/finds permissions for the menu and assigns them to the menu and specified roles.
 // Default actions if nil/empty: ["menu", "create", "read", "update", "delete"]
 func (m *Manager) AttachMenuPermissions(menuID string, actions []string, roleIDsOrCodes []string) error {
+	defer m.ClearCache()
 	if len(actions) == 0 {
 		actions = []string{"menu", "create", "read", "update", "delete"}
 	}
