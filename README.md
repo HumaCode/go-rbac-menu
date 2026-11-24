@@ -126,14 +126,38 @@ Contoh JSON response yang diterima Frontend:
 ]
 ```
 
-### 4. Mengecek Permission Aksi di Endpoint Bisnis PPID
+### 4. Spatie-Style Permission Check (`@can` & `attachMenupermission` di Go)
+
+Package ini menyediakan fungsi yang persis dengan konsep Laravel Spatie Permission:
+
+#### A. Cek Izin Ala `@can('action url')`:
 ```go
-// Contoh middleware di project PPID:
-hasAccess, err := menuManager.CheckPermission(userRoleIDs, "/ppid/permohonan", "delete")
-if !hasAccess {
-    // Tolak akses (403 Forbidden)
+// Format: "{action} {url_menu}" (Contoh: "read /ppid/permohonan", "delete /ppid/permohonan")
+if menuManager.Can(userRoleIDs, "delete /ppid/permohonan") {
+    // Boleh hapus
+}
+
+// Atau langsung pakai UserID:
+if menuManager.CanUser(currentUserID, "create /ppid/permohonan") {
+    // Boleh create
 }
 ```
+
+#### B. Otomatis Generate & Assign Permission Menu (Seperti Trait `HasMenuPermission`):
+```go
+// Menghasilkan aksi: 'menu', 'create', 'read', 'update', 'delete' untuk menu tsb,
+// sekaligus meng-assign ke role 'admin' dan 'dev'
+err := menuManager.AttachMenuPermissions(menuID, []string{"menu", "create", "read", "update", "delete"}, []string{"admin", "dev"})
+```
+
+#### C. Auto Authorize Middleware (Seperti Trait `HasPermission` Interceptor):
+Secara otomatis mencocokkan URL request dengan URL menu terdekat dan memetakan method HTTP:
+- `GET` ➔ `read`
+- `POST` ➔ `create`
+- `PUT`/`PATCH` ➔ `update`
+- `DELETE` ➔ `delete`
+
+Lalu otomatis mengecek permission `"{action} {matched_url}"`!
 
 ---
 
