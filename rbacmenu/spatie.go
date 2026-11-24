@@ -16,11 +16,18 @@ var DefaultAbilities = map[string]string{
 }
 
 // Can checks if the given active roles have the required ability/permission.
-// Format can be:
-// - "{action} {menu_path}" (e.g. "read /admin/users", "delete /ppid/permohonan")
-// - or simple permission code "{action}" (e.g. "read", "create")
-func (m *Manager) Can(roleIDs []string, ability string) bool {
-	if len(roleIDs) == 0 || ability == "" {
+// Supports single ability OR multiple abilities (variadic / array):
+// - menuManager.Can(roles, "read /admin/users")
+// - menuManager.Can(roles, "read /admin/users", "read /admin/profile")
+// - menuManager.Can(roles, mySlice...)
+// When multiple abilities are provided, it returns true if ANY of them are granted (like Spatie's @can([...])).
+func (m *Manager) Can(roleIDs []string, abilities ...string) bool {
+	return m.CanAny(roleIDs, abilities...)
+}
+
+// CanAny returns true if the roles have AT LEAST ONE of the specified abilities (OR logic)
+func (m *Manager) CanAny(roleIDs []string, abilities ...string) bool {
+	if len(roleIDs) == 0 || len(abilities) == 0 {
 		return false
 	}
 
@@ -31,7 +38,43 @@ func (m *Manager) Can(roleIDs []string, ability string) bool {
 		return true
 	}
 
+	for _, ability := range abilities {
+		if m.checkSingleAbility(roleIDs, ability) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// CanAll returns true if the roles have ALL of the specified abilities (AND logic)
+func (m *Manager) CanAll(roleIDs []string, abilities ...string) bool {
+	if len(roleIDs) == 0 || len(abilities) == 0 {
+		return false
+	}
+
+	// Developer / Superadmin bypass (check if any role code is 'dev')
+	var devCount int64
+	m.db.Model(&Role{}).Where("id IN (?) AND code = ? AND is_active = 1", roleIDs, "dev").Count(&devCount)
+	if devCount > 0 {
+		return true
+	}
+
+	for _, ability := range abilities {
+		if !m.checkSingleAbility(roleIDs, ability) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (m *Manager) checkSingleAbility(roleIDs []string, ability string) bool {
 	ability = strings.TrimSpace(ability)
+	if ability == "" {
+		return false
+	}
+
 	parts := strings.SplitN(ability, " ", 2)
 
 	// If formatted as "{action} {menu_path}"
@@ -55,20 +98,31 @@ func (m *Manager) Can(roleIDs []string, ability string) bool {
 	return err == nil && count > 0
 }
 
-// CanUser checks ability directly for a user ID
-func (m *Manager) CanUser(userID string, ability string) bool {
+// CanUser checks if a specific user has ANY of the specified abilities
+func (m *Manager) CanUser(userID string, abilities ...string) bool {
+	return m.CanUserAny(userID, abilities...)
+}
+
+// CanUserAny returns true if the user has AT LEAST ONE of the specified abilities
+func (m *Manager) CanUserAny(userID string, abilities ...string) bool {
+	roleIDs := m.getUserRoleIDs(userID)
+	return m.CanAny(roleIDs, abilities...)
+}
+
+// CanUserAll returns true if the user has ALL of the specified abilities
+func (m *Manager) CanUserAll(userID string, abilities ...string) bool {
+	roleIDs := m.getUserRoleIDs(userID)
+	return m.CanAll(roleIDs, abilities...)
+}
+
+func (m *Manager) getUserRoleIDs(userID string) []string {
 	var roleIDs []string
-	err := m.db.Table("user_roles").
+	_ = m.db.Table("user_roles").
 		Select("user_roles.role_id").
 		Joins("JOIN roles ON roles.id = user_roles.role_id AND roles.is_active = 1").
 		Where("user_roles.user_id = ?", userID).
-		Pluck("role_id", &roleIDs).Error
-
-	if err != nil || len(roleIDs) == 0 {
-		return false
-	}
-
-	return m.Can(roleIDs, ability)
+		Pluck("role_id", &roleIDs)
+	return roleIDs
 }
 
 // AttachMenuPermissions is the Go equivalent of Laravel's attachMenupermission trait:
@@ -229,3 +283,4 @@ func (m *Manager) AutoAuthorizeMiddleware() breeze.HandlerFunc {
 		return ctx.Next()
 	}
 }
+

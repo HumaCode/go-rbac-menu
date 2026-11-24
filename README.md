@@ -130,16 +130,33 @@ Contoh JSON response yang diterima Frontend:
 
 Package ini menyediakan fungsi yang persis dengan konsep Laravel Spatie Permission:
 
-#### A. Cek Izin Ala `@can('action url')`:
+#### A. Cek Izin Ala `@can('action url')` (Mendukung Single Maupun Multiple):
 ```go
-// Format: "{action} {url_menu}" (Contoh: "read /ppid/permohonan", "delete /ppid/permohonan")
+// 1. Single Permission:
 if menuManager.Can(userRoleIDs, "delete /ppid/permohonan") {
     // Boleh hapus
 }
 
-// Atau langsung pakai UserID:
-if menuManager.CanUser(currentUserID, "create /ppid/permohonan") {
-    // Boleh create
+// 2. Multiple Permissions ala @can(['menu /admin/user', 'menu /admin/profile'])
+// Otomatis bernilai TRUE jika memiliki SALAH SATU (OR logic ala @canany):
+if menuManager.Can(userRoleIDs, "menu /admin/user", "menu /admin/profile") {
+    // Punya izin ke salah satu menu
+}
+
+// Bisa juga passing slice / array:
+listIzin := []string{"menu /admin/user", "menu /admin/profile"}
+if menuManager.Can(userRoleIDs, listIzin...) {
+    // ...
+}
+
+// 3. Jika ingin memastikan HARUS PUNYA SEMUA izin (AND logic):
+if menuManager.CanAll(userRoleIDs, "create /ppid/permohonan", "update /ppid/permohonan") {
+    // Memiliki kedua izin sekaligus
+}
+
+// 4. Langsung menggunakan UserID:
+if menuManager.CanUser(currentUserID, "menu /admin/user", "menu /admin/profile") {
+    // User memiliki salah satu izin
 }
 ```
 
