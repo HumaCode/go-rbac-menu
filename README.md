@@ -8,9 +8,23 @@ Repo ini memiliki **2 fungsi sekaligus**:
 
 ---
 
-## 📦 Menggunakan Sebagai Library di Proyek Lain (Misal: Proyek PPID)
+## ✨ Fitur Menu Dinamis & Kategori
 
-Jika Anda sudah memiliki proyek Golang (misal `ppid`) dan ingin mengimplementasikan sistem menu hierarkis ini:
+- **Mendukung Pengelompokan Kategori (`Category`):**
+  - Menu dapat dikelompokkan berdasarkan nama kategori (contoh: `UTAMA`, `LAYANAN PPID`, `PENGATURAN SISTEM`).
+- **Nesting Bertingkat Tak Terbatas (*Unlimited Depth*):**
+  - `[Kategori]`
+    - `[icon] Menu (Level 1)`
+      - `[icon] Submenu (Level 2)`
+        - `[icon] Childmenu (Level 3)`
+          - `... dst`
+- **Opsi Output:**
+  - `GetNavMenuTree`: Mengembalikan pohon menu murni (`[]*Menu`).
+  - `GetNavMenuCategorized`: Mengembalikan menu yang sudah tersusun rapi berdasarkan kategori (`[]*NavCategory`) untuk kemudahan render di sidebar UI.
+
+---
+
+## 📦 Menggunakan Sebagai Library di Proyek Lain (Misal: Proyek PPID)
 
 ### 1. Install Package
 Di terminal folder proyek Anda (`ppid`):
@@ -38,39 +52,78 @@ func main() {
 }
 ```
 Tabel-tabel berikut akan otomatis dibuat di database proyek Anda dengan tipe ID **ULID (26 karakter)**:
-- `menus` (struktur hierarkis bertingkat dengan `parent_id`)
+- `menus` (struktur hierarkis bertingkat dengan `parent_id`, `category`, `type`)
 - `permissions` (`view`, `create`, `edit`, `delete`)
 - `menu_permissions` (aksi yang tersedia di tiap menu)
 - `roles` (`dev`, `admin`, `user`, dll)
 - `role_menu_permissions` (hak akses role terhadap aksi di menu)
 - `user_roles` (relasi user ke role)
 
-### 3. Mengambil Menu Navigasi (Tree) untuk User yang Login
+### 3. Mengambil Menu Navigasi Berdasarkan Kategori untuk Frontend
 Di handler/controller proyek Anda (Gin/Fiber/Echo):
 
 ```go
 import "github.com/HumaCode/go-rbac-menu/rbacmenu"
 
 func GetUserMenuHandler(c *gin.Context) {
-    // Inisialisasi manager RBAC Menu
     menuManager := rbacmenu.New(ppidDB)
-
-    // Ambil daftar role_id milik user yang sedang login
     userRoleIDs := []string{"01HQ0000000000000000000001"} 
 
-    // Ambil struktur Tree Menu (Hanya yang is_active = 1)
-    navTree, err := menuManager.GetNavMenuTree(userRoleIDs)
+    // Opsi A: Dapatkan menu yang sudah dikelompokkan rapi per Kategori
+    categorizedMenus, err := menuManager.GetNavMenuCategorized(userRoleIDs)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
 
-    // Mengembalikan JSON Tree siap pakai untuk sidebar frontend
     c.JSON(200, gin.H{
         "success": true,
-        "data": navTree,
+        "data": categorizedMenus,
     })
 }
+```
+
+Contoh JSON response yang diterima Frontend:
+```json
+[
+  {
+    "category": "UTAMA",
+    "order_no": 1,
+    "menus": [
+      {
+        "title": "Dashboard",
+        "path": "/dashboard",
+        "icon": "layout-dashboard",
+        "children": []
+      }
+    ]
+  },
+  {
+    "category": "LAYANAN PPID",
+    "order_no": 2,
+    "menus": [
+      {
+        "title": "Permohonan Informasi",
+        "path": "/ppid/permohonan",
+        "icon": "file-text",
+        "children": [
+          {
+            "title": "Permohonan Baru",
+            "path": "/ppid/permohonan/masuk",
+            "icon": "inbox",
+            "children": []
+          },
+          {
+            "title": "Dalam Proses",
+            "path": "/ppid/permohonan/proses",
+            "icon": "clock",
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+]
 ```
 
 ### 4. Mengecek Permission Aksi di Endpoint Bisnis PPID
@@ -108,8 +161,9 @@ go run cmd/api/main.go
 
 - `POST /api/v1/auth/login` : Login user & generate JWT.
 - `GET /api/v1/nav-menu` : Mengambil **Dynamic Hierarchical Menu Tree** untuk user yang login.
+- `GET /api/v1/nav-menu?grouped=true` : Mengambil **Dynamic Menu yang dikelompokkan per Kategori**.
 - `GET /api/v1/menus` : Manajemen menu.
-- `POST /api/v1/menus` : Buat menu baru.
+- `POST /api/v1/menus` : Buat menu baru (bisa isi `category`, `parent_id`, `order_no`).
 - `POST /api/v1/menus/:id/permissions` : Hubungkan aksi ke menu (`menu_permissions`).
 - `POST /api/v1/roles/menu-permissions` : Berikan izin aksi menu ke role (`role_menu_permissions`).
 - `GET /api/v1/roles` : Manajemen role.

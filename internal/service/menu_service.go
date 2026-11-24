@@ -10,6 +10,7 @@ import (
 
 type MenuService interface {
 	GetNavMenuTreeForUser(userID string) ([]*domain.Menu, error)
+	GetNavMenuCategorizedForUser(userID string) ([]*domain.NavCategory, error)
 	ListActiveMenus() ([]domain.Menu, error)
 	GetMenuByID(id string) (*domain.Menu, error)
 	CreateMenu(req CreateMenuRequest) (*domain.Menu, error)
@@ -31,6 +32,8 @@ type menuService struct {
 
 type CreateMenuRequest struct {
 	ParentID *string `json:"parent_id"`
+	Category string  `json:"category"` // e.g. "UTAMA", "LAYANAN PPID", "PENGATURAN"
+	Type     string  `json:"type"`     // 'menu' or 'category'
 	Title    string  `json:"title"`
 	Path     string  `json:"path"`
 	Icon     string  `json:"icon"`
@@ -39,6 +42,8 @@ type CreateMenuRequest struct {
 
 type UpdateMenuRequest struct {
 	ParentID *string `json:"parent_id"`
+	Category string  `json:"category"`
+	Type     string  `json:"type"`
 	Title    string  `json:"title"`
 	Path     string  `json:"path"`
 	Icon     string  `json:"icon"`
@@ -132,6 +137,8 @@ func (s *menuService) GetNavMenuTreeForUser(userID string) ([]*domain.Menu, erro
 		node := &domain.Menu{
 			BaseModel:   original.BaseModel,
 			ParentID:    original.ParentID,
+			Category:    original.Category,
+			Type:        original.Type,
 			Title:       original.Title,
 			Path:        original.Path,
 			Icon:        original.Icon,
@@ -143,7 +150,7 @@ func (s *menuService) GetNavMenuTreeForUser(userID string) ([]*domain.Menu, erro
 		nodeMap[mID] = node
 	}
 
-	// 6. Build hierarchy (Parent -> Children)
+	// 6. Build hierarchy (Parent -> Children -> Grandchildren)
 	var rootMenus []*domain.Menu
 	for _, node := range nodeMap {
 		if node.ParentID == nil || *node.ParentID == "" {
@@ -160,6 +167,56 @@ func (s *menuService) GetNavMenuTreeForUser(userID string) ([]*domain.Menu, erro
 	sortMenuTree(rootMenus)
 
 	return rootMenus, nil
+}
+
+func (s *menuService) GetNavMenuCategorizedForUser(userID string) ([]*domain.NavCategory, error) {
+	rootTree, err := s.GetNavMenuTreeForUser(userID)
+	if err != nil {
+		return nil, err
+	}
+	return GroupDomainMenusByCategory(rootTree), nil
+}
+
+// GroupDomainMenusByCategory groups root menus by their Category attribute
+func GroupDomainMenusByCategory(rootMenus []*domain.Menu) []*domain.NavCategory {
+	categoryMap := make(map[string]*domain.NavCategory)
+	var categoryOrder []string
+
+	for _, menu := range rootMenus {
+		catName := menu.Category
+		if catName == "" {
+			catName = "UTAMA"
+		}
+
+		if _, exists := categoryMap[catName]; !exists {
+			categoryMap[catName] = &domain.NavCategory{
+				Category: catName,
+				OrderNo:  menu.OrderNo,
+				Menus:    make([]*domain.Menu, 0),
+			}
+			categoryOrder = append(categoryOrder, catName)
+		}
+
+		if menu.OrderNo < categoryMap[catName].OrderNo {
+			categoryMap[catName].OrderNo = menu.OrderNo
+		}
+
+		categoryMap[catName].Menus = append(categoryMap[catName].Menus, menu)
+	}
+
+	var result []*domain.NavCategory
+	for _, catName := range categoryOrder {
+		result = append(result, categoryMap[catName])
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].OrderNo == result[j].OrderNo {
+			return result[i].Category < result[j].Category
+		}
+		return result[i].OrderNo < result[j].OrderNo
+	})
+
+	return result
 }
 
 func sortMenuTree(menus []*domain.Menu) {
@@ -186,8 +243,15 @@ func (s *menuService) GetMenuByID(id string) (*domain.Menu, error) {
 }
 
 func (s *menuService) CreateMenu(req CreateMenuRequest) (*domain.Menu, error) {
+	menuType := req.Type
+	if menuType == "" {
+		menuType = "menu"
+	}
+
 	menu := &domain.Menu{
 		ParentID: req.ParentID,
+		Category: req.Category,
+		Type:     menuType,
 		Title:    req.Title,
 		Path:     req.Path,
 		Icon:     req.Icon,
@@ -208,6 +272,10 @@ func (s *menuService) UpdateMenu(id string, req UpdateMenuRequest) (*domain.Menu
 	}
 
 	menu.ParentID = req.ParentID
+	menu.Category = req.Category
+	if req.Type != "" {
+		menu.Type = req.Type
+	}
 	menu.Title = req.Title
 	menu.Path = req.Path
 	menu.Icon = req.Icon
@@ -241,4 +309,3 @@ func (s *menuService) AssignRoleMenuPermission(roleID, menuPermissionID string) 
 func (s *menuService) RemoveRoleMenuPermission(roleID, menuPermissionID string) error {
 	return s.menuRepo.RemoveRoleMenuPermission(roleID, menuPermissionID)
 }
-

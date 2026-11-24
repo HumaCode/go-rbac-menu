@@ -54,35 +54,47 @@ func SeedDatabase(db *gorm.DB) error {
 		}
 	}
 
-	// 3. Seed Menus (Tree structure)
-	// Root: Dashboard
-	dashboardMenu := getOrCreateMenu(db, nil, "Dashboard", "/dashboard", "layout-dashboard", 1)
+	// 3. Seed Menus (Categorized & 3-Level Hierarchy)
+	// --- KATEGORI 1: UTAMA ---
+	dashboardMenu := getOrCreateMenu(db, nil, "UTAMA", "menu", "Dashboard", "/dashboard", "layout-dashboard", 1)
 
-	// Root: System Management (Parent)
-	systemMenu := getOrCreateMenu(db, nil, "System Management", "/system", "settings", 2)
+	// --- KATEGORI 2: LAYANAN PPID (Contoh 3 Level: Menu -> Submenu -> Childmenu) ---
+	ppidRootMenu := getOrCreateMenu(db, nil, "LAYANAN PPID", "menu", "Layanan Permohonan", "/ppid", "folder", 2)
+	// Level 2 (Submenu):
+	ppidPermohonan := getOrCreateMenu(db, &ppidRootMenu.ID, "LAYANAN PPID", "menu", "Permohonan Informasi", "/ppid/permohonan", "file-text", 1)
+	ppidKeberatan := getOrCreateMenu(db, &ppidRootMenu.ID, "LAYANAN PPID", "menu", "Pengajuan Keberatan", "/ppid/keberatan", "alert-circle", 2)
+	// Level 3 (Childmenu):
+	ppidMasuk := getOrCreateMenu(db, &ppidPermohonan.ID, "LAYANAN PPID", "menu", "Permohonan Baru", "/ppid/permohonan/masuk", "inbox", 1)
+	ppidProses := getOrCreateMenu(db, &ppidPermohonan.ID, "LAYANAN PPID", "menu", "Dalam Proses", "/ppid/permohonan/proses", "clock", 2)
+	ppidSelesai := getOrCreateMenu(db, &ppidPermohonan.ID, "LAYANAN PPID", "menu", "Selesai", "/ppid/permohonan/selesai", "check-circle", 3)
 
-	// Submenus under System Management
-	userMenu := getOrCreateMenu(db, &systemMenu.ID, "User Management", "/system/users", "users", 1)
-	roleMenu := getOrCreateMenu(db, &systemMenu.ID, "Role Management", "/system/roles", "shield", 2)
-	menuMenu := getOrCreateMenu(db, &systemMenu.ID, "Menu Management", "/system/menus", "menu", 3)
+	// --- KATEGORI 3: PENGATURAN SISTEM ---
+	systemMenu := getOrCreateMenu(db, nil, "PENGATURAN SISTEM", "menu", "System Management", "/system", "settings", 3)
+	// Level 2 (Submenu):
+	userMenu := getOrCreateMenu(db, &systemMenu.ID, "PENGATURAN SISTEM", "menu", "User Management", "/system/users", "users", 1)
+	roleMenu := getOrCreateMenu(db, &systemMenu.ID, "PENGATURAN SISTEM", "menu", "Role Management", "/system/roles", "shield", 2)
+	menuMenu := getOrCreateMenu(db, &systemMenu.ID, "PENGATURAN SISTEM", "menu", "Menu Management", "/system/menus", "menu", 3)
 
 	// 4. Seed Menu Permissions
-	// Dashboard has 'view'
 	dashViewMP := getOrCreateMenuPermission(db, dashboardMenu.ID, permMap["view"].ID)
 
-	// User menu has: view, create, edit, delete
+	ppidRootViewMP := getOrCreateMenuPermission(db, ppidRootMenu.ID, permMap["view"].ID)
+	ppidPermohonanViewMP := getOrCreateMenuPermission(db, ppidPermohonan.ID, permMap["view"].ID)
+	ppidKeberatanViewMP := getOrCreateMenuPermission(db, ppidKeberatan.ID, permMap["view"].ID)
+	ppidMasukViewMP := getOrCreateMenuPermission(db, ppidMasuk.ID, permMap["view"].ID)
+	ppidProsesViewMP := getOrCreateMenuPermission(db, ppidProses.ID, permMap["view"].ID)
+	ppidSelesaiViewMP := getOrCreateMenuPermission(db, ppidSelesai.ID, permMap["view"].ID)
+
 	userViewMP := getOrCreateMenuPermission(db, userMenu.ID, permMap["view"].ID)
 	userCreateMP := getOrCreateMenuPermission(db, userMenu.ID, permMap["create"].ID)
 	userEditMP := getOrCreateMenuPermission(db, userMenu.ID, permMap["edit"].ID)
 	userDeleteMP := getOrCreateMenuPermission(db, userMenu.ID, permMap["delete"].ID)
 
-	// Role menu has: view, create, edit, delete
 	roleViewMP := getOrCreateMenuPermission(db, roleMenu.ID, permMap["view"].ID)
 	roleCreateMP := getOrCreateMenuPermission(db, roleMenu.ID, permMap["create"].ID)
 	roleEditMP := getOrCreateMenuPermission(db, roleMenu.ID, permMap["edit"].ID)
 	roleDeleteMP := getOrCreateMenuPermission(db, roleMenu.ID, permMap["delete"].ID)
 
-	// Menu menu has: view, create, edit, delete
 	menuViewMP := getOrCreateMenuPermission(db, menuMenu.ID, permMap["view"].ID)
 	menuCreateMP := getOrCreateMenuPermission(db, menuMenu.ID, permMap["create"].ID)
 	menuEditMP := getOrCreateMenuPermission(db, menuMenu.ID, permMap["edit"].ID)
@@ -90,6 +102,8 @@ func SeedDatabase(db *gorm.DB) error {
 
 	allMPs := []*domain.MenuPermission{
 		dashViewMP,
+		ppidRootViewMP, ppidPermohonanViewMP, ppidKeberatanViewMP,
+		ppidMasukViewMP, ppidProsesViewMP, ppidSelesaiViewMP,
 		userViewMP, userCreateMP, userEditMP, userDeleteMP,
 		roleViewMP, roleCreateMP, roleEditMP, roleDeleteMP,
 		menuViewMP, menuCreateMP, menuEditMP, menuDeleteMP,
@@ -102,10 +116,12 @@ func SeedDatabase(db *gorm.DB) error {
 		assignRoleMenuPermission(db, devRole.ID, mp.ID)
 	}
 
-	// 'admin' gets Dashboard (view), Users (view, create, edit), Roles (view), Menus (view)
+	// 'admin' gets Dashboard, PPID, and Management
 	adminRole := roleMap["admin"]
 	adminMPs := []*domain.MenuPermission{
 		dashViewMP,
+		ppidRootViewMP, ppidPermohonanViewMP, ppidKeberatanViewMP,
+		ppidMasukViewMP, ppidProsesViewMP, ppidSelesaiViewMP,
 		userViewMP, userCreateMP, userEditMP,
 		roleViewMP,
 		menuViewMP,
@@ -114,9 +130,15 @@ func SeedDatabase(db *gorm.DB) error {
 		assignRoleMenuPermission(db, adminRole.ID, mp.ID)
 	}
 
-	// 'user' gets Dashboard (view)
+	// 'user' gets Dashboard & PPID Layanan View
 	userRole := roleMap["user"]
-	assignRoleMenuPermission(db, userRole.ID, dashViewMP.ID)
+	userRoleMPs := []*domain.MenuPermission{
+		dashViewMP,
+		ppidRootViewMP, ppidPermohonanViewMP, ppidMasukViewMP,
+	}
+	for _, mp := range userRoleMPs {
+		assignRoleMenuPermission(db, userRole.ID, mp.ID)
+	}
 
 	// 6. Seed Default Users
 	seedUser(db, "dev", "dev@example.com", "Developer Admin", "dev123", devRole.ID)
@@ -127,11 +149,13 @@ func SeedDatabase(db *gorm.DB) error {
 	return nil
 }
 
-func getOrCreateMenu(db *gorm.DB, parentID *string, title, path, icon string, orderNo int) *domain.Menu {
+func getOrCreateMenu(db *gorm.DB, parentID *string, category, menuType, title, path, icon string, orderNo int) *domain.Menu {
 	var m domain.Menu
 	if err := db.Where("path = ?", path).First(&m).Error; err != nil {
 		m = domain.Menu{
 			ParentID: parentID,
+			Category: category,
+			Type:     menuType,
 			Title:    title,
 			Path:     path,
 			Icon:     icon,
@@ -139,6 +163,13 @@ func getOrCreateMenu(db *gorm.DB, parentID *string, title, path, icon string, or
 			IsActive: 1,
 		}
 		_ = db.Create(&m)
+	} else {
+		// Update category and type if empty
+		if m.Category == "" || m.Type == "" {
+			m.Category = category
+			m.Type = menuType
+			_ = db.Save(&m)
+		}
 	}
 	return &m
 }
@@ -189,4 +220,3 @@ func seedUser(db *gorm.DB, username, email, name, password, roleID string) {
 		}
 	}
 }
-

@@ -104,6 +104,8 @@ func (m *Manager) GetNavMenuTree(roleIDs []string) ([]*Menu, error) {
 		node := &Menu{
 			BaseModel:   original.BaseModel,
 			ParentID:    original.ParentID,
+			Category:    original.Category,
+			Type:        original.Type,
 			Title:       original.Title,
 			Path:        original.Path,
 			Icon:        original.Icon,
@@ -130,6 +132,61 @@ func (m *Manager) GetNavMenuTree(roleIDs []string) ([]*Menu, error) {
 	// 7. Sort recursively by OrderNo
 	sortTree(rootMenus)
 	return rootMenus, nil
+}
+
+// GetNavMenuCategorized returns root menus grouped cleanly by Category.
+// Each root menu contains its full nested hierarchy (Submenus, Childmenus, etc.).
+func (m *Manager) GetNavMenuCategorized(roleIDs []string) ([]*NavCategory, error) {
+	rootTree, err := m.GetNavMenuTree(roleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return GroupMenusByCategory(rootTree), nil
+}
+
+// GroupMenusByCategory groups an existing tree of root menus by their Category attribute
+func GroupMenusByCategory(rootMenus []*Menu) []*NavCategory {
+	categoryMap := make(map[string]*NavCategory)
+	var categoryOrder []string
+
+	for _, menu := range rootMenus {
+		catName := menu.Category
+		if catName == "" {
+			catName = "UTAMA"
+		}
+
+		if _, exists := categoryMap[catName]; !exists {
+			categoryMap[catName] = &NavCategory{
+				Category: catName,
+				OrderNo:  menu.OrderNo,
+				Menus:    make([]*Menu, 0),
+			}
+			categoryOrder = append(categoryOrder, catName)
+		}
+
+		// Update category min order_no
+		if menu.OrderNo < categoryMap[catName].OrderNo {
+			categoryMap[catName].OrderNo = menu.OrderNo
+		}
+
+		categoryMap[catName].Menus = append(categoryMap[catName].Menus, menu)
+	}
+
+	var result []*NavCategory
+	for _, catName := range categoryOrder {
+		result = append(result, categoryMap[catName])
+	}
+
+	// Sort categories by OrderNo asc
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].OrderNo == result[j].OrderNo {
+			return result[i].Category < result[j].Category
+		}
+		return result[i].OrderNo < result[j].OrderNo
+	})
+
+	return result
 }
 
 func sortTree(menus []*Menu) {

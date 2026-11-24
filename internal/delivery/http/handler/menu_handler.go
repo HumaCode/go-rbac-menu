@@ -15,13 +15,23 @@ func NewMenuHandler(menuService service.MenuService) *MenuHandler {
 	return &MenuHandler{menuService: menuService}
 }
 
-// GetNavMenu returns the hierarchical navigation menu tree for the current authenticated user
+// GetNavMenu returns the hierarchical navigation menu tree for the current authenticated user.
+// Pass ?grouped=true to receive menus neatly grouped by category.
 func (h *MenuHandler) GetNavMenu(ctx *breeze.Context) error {
 	userIDVal, exists := ctx.Get("user_id")
 	if !exists {
 		return response.Error(ctx, 401, "Unauthorized", nil)
 	}
 	userID := userIDVal.(string)
+
+	grouped := ctx.Query("grouped")
+	if grouped == "true" || grouped == "1" {
+		categories, err := h.menuService.GetNavMenuCategorizedForUser(userID)
+		if err != nil {
+			return response.Error(ctx, 500, "Failed to load categorized navigation menu", err)
+		}
+		return response.Success(ctx, 200, "Categorized navigation menus retrieved successfully", categories)
+	}
 
 	tree, err := h.menuService.GetNavMenuTreeForUser(userID)
 	if err != nil {
