@@ -240,3 +240,4 @@ func (m *Manager) MenusForUser(userID string) []*NavCategory {
 	roleIDs := m.getUserRoleIDs(userID)
 	return m.Menus(roleIDs...)
 }
+
